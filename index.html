@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>나에게 맞는 고등학교 찾기</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .fade-in { animation: fadeIn 0.4s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .option-btn { transition: all 0.2s ease; }
+        .option-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4 text-gray-800">
+
+    <div id="app-container" class="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden relative min-h-[500px] flex flex-col">
+        
+        <!-- 에러 메시지 토스트 -->
+        <div id="toast-msg" class="absolute top-4 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg opacity-0 pointer-events-none transition-opacity duration-300 z-50">
+            모든 정보를 입력해주세요!
+        </div>
+
+        <!-- 헤더 -->
+        <div class="bg-blue-600 text-white p-6 text-center">
+            <h1 class="text-2xl font-bold">🏫 나에게 맞는 고등학교 찾기</h1>
+            <p class="text-blue-100 mt-2 text-sm">관내 고등학교 중 나의 성향에 가장 잘 맞는 학교를 추천해 드립니다.</p>
+        </div>
+
+        <!-- 1단계: 학번, 이름 입력 -->
+        <div id="step-1" class="p-8 fade-in flex-grow">
+            <h2 class="text-xl font-semibold mb-6 text-gray-700">기본 정보를 입력해주세요</h2>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">학번 (예: 30101)</label>
+                    <input type="text" id="studentId" placeholder="학번 5자리 입력" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">이름</label>
+                    <input type="text" id="name" placeholder="이름 입력" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+                </div>
+            </div>
+
+            <button onclick="goToStep2()" class="w-full mt-8 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors shadow-md">
+                입장하기
+            </button>
+        </div>
+
+        <!-- 2단계: 구역, 성별 설정 (한 화면에 모두 표시) -->
+        <div id="step-2" class="p-8 hidden fade-in flex-grow">
+            <h2 class="text-xl font-semibold mb-6 text-gray-700">탐색할 조건을 설정해주세요</h2>
+            
+            <div class="space-y-6">
+                <!-- 진학 희망 구역 -->
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">1. 진학 희망 구역</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="district" value="분당구" class="peer sr-only">
+                            <div class="p-3 text-center border-2 border-gray-200 rounded-lg font-medium text-gray-700 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 hover:bg-gray-50 transition-all">분당구</div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="district" value="수정구와 중원구" class="peer sr-only">
+                            <div class="p-3 text-center border-2 border-gray-200 rounded-lg font-medium text-gray-700 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 hover:bg-gray-50 transition-all">수정구·중원구</div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 성별 -->
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">2. 성별</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="gender" value="남학생" class="peer sr-only">
+                            <div class="p-3 text-center border-2 border-gray-200 rounded-lg font-medium text-gray-700 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 hover:bg-gray-50 transition-all">남학생</div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="gender" value="여학생" class="peer sr-only">
+                            <div class="p-3 text-center border-2 border-gray-200 rounded-lg font-medium text-gray-700 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 hover:bg-gray-50 transition-all">여학생</div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 희망 고등학교 유형 -->
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">3. 희망 고등학교 유형</label>
+                    <div class="flex flex-col gap-2">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="schoolTypePref" value="일반고" class="peer sr-only">
+                            <div class="p-3 border-2 border-gray-200 rounded-lg font-medium text-gray-700 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 hover:bg-gray-50 transition-all">일반고 (자율형 공립고 포함)</div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="schoolTypePref" value="특성화고" class="peer sr-only">
+                            <div class="p-3 border-2 border-gray-200 rounded-lg font-medium text-gray-700 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 hover:bg-gray-50 transition-all">특성화고 (특수목적고 포함)</div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="schoolTypePref" value="상관없음" class="peer sr-only">
+                            <div class="p-3 border-2 border-gray-200 rounded-lg font-medium text-gray-700 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 hover:bg-gray-50 transition-all">상관없음 (모두 포함하여 탐색)</div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex gap-3 mt-8">
+                <button onclick="goBackToStep1()" class="w-1/3 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-4 rounded-lg transition-colors">
+                    이전
+                </button>
+                <button onclick="startQuiz()" class="w-2/3 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors shadow-md">
+                    질문 시작
+                </button>
+            </div>
+        </div>
+
+        <!-- 3단계: 퀴즈 화면 -->
+        <div id="step-3" class="p-8 hidden flex-grow flex flex-col">
+            <div id="welcome-message" class="text-lg font-medium text-blue-600 mb-4 text-center"></div>
+            
+            <div class="w-full bg-gray-200 rounded-full h-2.5 mb-6 overflow-hidden">
+                <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full transition-all duration-300" style="width: 10%"></div>
+            </div>
+
+            <div class="flex-grow flex flex-col justify-center">
+                <h3 id="question-text" class="text-xl font-bold text-gray-800 mb-6 leading-relaxed"></h3>
+                <div id="options-container" class="space-y-3">
+                    <!-- 옵션 버튼들이 여기에 동적으로 렌더링됩니다 -->
+                </div>
+            </div>
+            
+            <div class="mt-6 text-center text-sm text-gray-500 font-medium">
+                <span id="q-current">1</span> / 10
+            </div>
+        </div>
+
+        <!-- 4단계: 결과 화면 -->
+        <div id="step-4" class="p-8 hidden flex-grow bg-gray-50 overflow-y-auto">
+            <div class="text-center mb-8">
+                <h2 class="text-2xl font-bold text-gray-800">🎉 추천 결과 분석 완료!</h2>
+                <p id="result-subtitle" class="text-gray-600 mt-2">입력하신 성향을 바탕으로 추천된 학교입니다.</p>
+            </div>
+            
+            <div id="results-container" class="space-y-4 mb-8">
+                <!-- 결과 카드가 여기에 렌더링됩니다 -->
+            </div>
+
+            <!-- 전체 학교 비교 섹션 -->
+            <div class="mt-10 pt-8 border-t border-gray-200">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">📊 선택 구역 전체 비교 대상 고등학교</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left text-gray-500 border border-gray-200 rounded-lg overflow-hidden">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-200">
+                            <tr>
+                                <th scope="col" class="px-4 py-3 border-b">학교명</th>
+                                <th scope="col" class="px-4 py-3 border-b whitespace-nowrap">설립/유형</th>
+                                <th scope="col" class="px-4 py-3 border-b">특색 프로그램</th>
+                            </tr>
+                        </thead>
+                        <tbody id="comparison-tbody" class="bg-white">
+                            <!-- 비교 데이터가 여기에 렌더링됩니다 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 나의 최종 선택 섹션 추가 -->
+            <div class="mt-10 pt-8 border-t border-gray-200">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">🎯 나의 최종 희망 고등학교 선택</h3>
+                <p class="text-sm text-gray-600 mb-4">추천 결과와 학교 비교표를 바탕으로 본인이 진학하고 싶은 고등학교를 선택한 뒤 제출해주세요.</p>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">1순위 희망 학교</label>
+                        <select id="user-choice-1" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"></select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">2순위 희망 학교</label>
+                        <select id="user-choice-2" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"></select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">3순위 희망 학교</label>
+                        <select id="user-choice-3" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"></select>
+                    </div>
+                </div>
+                <button onclick="submitFinalChoice()" id="submit-btn" class="w-full mt-6 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors shadow-md">
+                    최종 선택 제출하기
+                </button>
+            </div>
+
+            <button onclick="location.reload()" class="w-full mt-8 bg-white border border-gray-300 hover:bg-gray-100 text-gray-800 font-semibold py-3 px-4 rounded-lg transition-colors shadow-sm">
+                처음부터 다시하기
+            </button>
+        </div>
+
+        <!-- 학교 상세 정보 모달 -->
+        <div id="school-modal" class="absolute inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-40 p-4">
+            <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl relative fade-in">
+                <button onclick="closeSchoolDetail()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+                <div class="mb-4">
+                    <span id="modal-district" class="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full border border-blue-200"></span>
+                </div>
+                <h2 id="modal-title" class="text-2xl font-bold text-gray-800 mb-1"></h2>
+                <p id="modal-type" class="text-sm font-medium text-gray-500 mb-5"></p>
+                
+                <div class="space-y-4">
+                    <div>
+                        <h4 class="text-sm font-bold text-gray-700 mb-2">⭐ 주요 특색 프로그램</h4>
+                        <div id="modal-features" class="flex flex-wrap gap-2 text-sm"></div>
+                    </div>
+                    <div class="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                        <h4 class="text-sm font-bold text-blue-800 mb-2">💡 맞춤형 추천 포인트</h4>
+                        <ul id="modal-reasons" class="text-sm text-gray-700 space-y-1.5 list-disc list-inside"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- 데이터베이스 설정 ---
+        const schoolsDB = [
+            // 수정구 & 중원구 (12개교) - district: "수정구와 중원구"
+            { name: "복정고", district: "수정구와 중원구", type: "coed", detailType: "공립 일반고", features: ["과학창의", "혁신학교"] },
+            { name: "위례한빛고", district: "수정구와 중원구", type: "coed", detailType: "공립 일반고", features: ["과학중점고", "AI 중점 학교"] },
+            { name: "풍생고", district: "수정구와 중원구", type: "coed", detailType: "사립 일반고", features: ["과학중점고", "유네스코 학교"] },
+            { name: "효성고", district: "수정구와 중원구", type: "coed", detailType: "사립 일반고", features: ["과학중점고", "기숙사운영"] },
+            { name: "성보경영고", district: "수정구와 중원구", type: "coed", detailType: "사립 특성화고", features: ["경영/세무특화", "취업맞춤형"] },
+            { name: "동광고", district: "수정구와 중원구", type: "coed", detailType: "사립 일반고", features: ["진로맞춤형", "창의체험"] },
+            { name: "성남고", district: "수정구와 중원구", type: "boys", detailType: "공립 자율형 공립고", features: ["남고", "자율형 공립고"] },
+            { name: "성남여고", district: "수정구와 중원구", type: "girls", detailType: "공립 일반고", features: ["여고", "AI 중점 학교"] },
+            { name: "성남테크노과학고", district: "수정구와 중원구", type: "coed", detailType: "공립 특성화고", features: ["로봇/기계특화", "실습중심"] },
+            { name: "성일고", district: "수정구와 중원구", type: "boys", detailType: "사립 일반고", features: ["남고", "진로맞춤형"] },
+            { name: "성일정보고", district: "수정구와 중원구", type: "coed", detailType: "사립 특성화고", features: ["소프트웨어특화", "취업맞춤형"] },
+            { name: "숭신고", district: "수정구와 중원구", type: "coed", detailType: "사립 일반고", features: ["AI 중점 학교", "독서활성화"] },
+
+            // 분당구 (24개교) - district: "분당구"
+            { name: "계원예술고", district: "분당구", type: "coed", detailType: "사립 특목고", features: ["예술전문", "실기중심"] },
+            { name: "낙생고", district: "분당구", type: "coed", detailType: "사립 일반고", features: ["과학중점고", "독서활성화"] },
+            { name: "늘푸른고", district: "분당구", type: "coed", detailType: "공립 일반고", features: ["교과특성화", "진로맞춤형"] },
+            { name: "돌마고", district: "분당구", type: "coed", detailType: "공립 일반고", features: ["AI 중점 학교", "교과특성화"] },
+            { name: "보평고", district: "분당구", type: "coed", detailType: "공립 일반고", features: ["과학중점고", "유네스코 학교"] },
+            { name: "분당경영고", district: "분당구", type: "coed", detailType: "공립 특성화고", features: ["경영/세무특화", "취업맞춤형"] },
+            { name: "분당고", district: "분당구", type: "coed", detailType: "공립 일반고", features: ["과학중점고", "AI 중점 학교"] },
+            { name: "분당대진고", district: "분당구", type: "coed", detailType: "사립 일반고", features: ["소프트웨어특화", "인성교육"] },
+            { name: "분당아람고", district: "분당구", type: "coed", detailType: "공립 특성화고", features: ["AI융합특화", "창업체험"] },
+            { name: "분당영덕여고", district: "분당구", type: "girls", detailType: "사립 일반고", features: ["여고", "기숙사운영"] },
+            { name: "분당중앙고", district: "분당구", type: "coed", detailType: "공립 자율형 공립고", features: ["과학중점고", "진로맞춤형"] },
+            { name: "불곡고", district: "분당구", type: "coed", detailType: "공립 일반고", features: ["과학중점고", "AI 중점 학교"] },
+            { name: "서현고", district: "분당구", type: "coed", detailType: "공립 일반고", features: ["국제교류", "진로맞춤형"] },
+            { name: "성남외국어고", district: "분당구", type: "coed", detailType: "공립 특목고", features: ["외국어전문", "국제교류"] },
+            { name: "송림고", district: "분당구", type: "coed", detailType: "사립 일반고", features: ["미래교육", "디지털교육"] },
+            { name: "수내고", district: "분당구", type: "coed", detailType: "공립 일반고", features: ["교과특성화", "진로맞춤형"] },
+            { name: "야탑고", district: "분당구", type: "coed", detailType: "사립 일반고", features: ["진로맞춤형", "창의융합"] },
+            { name: "양영디지털고", district: "분당구", type: "coed", detailType: "공립 특성화고", features: ["AI/소프트웨어", "실습중심"] },
+            { name: "운중고", district: "분당구", type: "coed", detailType: "공립 일반고", features: ["AI 중점 학교", "생태환경"] },
+            { name: "이매고", district: "분당구", type: "coed", detailType: "공립 일반고", features: ["AI 중점 학교", "독서활성화"] },
+            { name: "이우고", district: "분당구", type: "coed", detailType: "사립 대안학교", features: ["생태평화", "학생주도"] },
+            { name: "태원고", district: "분당구", type: "coed", detailType: "사립 일반고", features: ["AI 평가 실천", "창의융합"] },
+            { name: "판교고", district: "분당구", type: "coed", detailType: "공립 자율형 공립고", features: ["자율형 공립고", "진로맞춤형"] },
+            { name: "한솔고", district: "분당구", type: "coed", detailType: "공립 일반고", features: ["과학특성화", "진로맞춤형"] }
+        ];
+
+        // --- 퀴즈 문항 설정 ---
+        const questions = [
+            {
+                q: "1. 학교 과정 중 가장 시간 가는 줄 모르는 것은?",
+                options: [
+                    { text: "A. 과학 실험이나 수학 문제의 해답을 찾을 때", val: "sci" },
+                    { text: "B. 컴퓨터 코딩, 정보 시간에 프로그램을 다룰 때", val: "ai" },
+                    { text: "C. 국어, 영어, 사회 시간에 토론하거나 글을 읽을 때", val: "general" },
+                    { text: "D. 미술, 음악, 체육 등 실기나 실습을 할 때", val: "vocational" }
+                ]
+            },
+            {
+                q: "2. 지금 마음 속에 있는 자신의 꿈과 가장 가까운 직업은?",
+                options: [
+                    { text: "A. 과학자, 연구원, 엔지니어, 의료인 등", val: "sci" },
+                    { text: "B. 프로그래머, AI 전문가, 데이터 분석가 등", val: "ai" },
+                    { text: "C. 경영, 인문, 교육, 언론 관련 직업군", val: "general" },
+                    { text: "D. 디자이너, 예술가, 전문 기술직 종사자", val: "vocational" }
+                ]
+            },
+            {
+                q: "3. 나에게 맞는 공부 방법은?",
+                options: [
+                    { text: "A. 교과서와 책을 깊이 있게 파고드는 이론 탐구", val: "theory" },
+                    { text: "B. 직접 만지고 참여하며 결과물을 내는 실습 중심", val: "practice" },
+                    { text: "C. 친구들과 함께 토론하고 협력하는 그룹 프로젝트", val: "coop" },
+                    { text: "D. 나의 관심 분야를 스스로 찾아 파고드는 자기주도 학습", val: "self" }
+                ]
+            },
+            {
+                q: "4. 방학에 자유 과제를 낸다면 무엇을 할까?",
+                options: [
+                    { text: "A. 평소 관심 있던 과학/수학 현상에 대한 심화 탐구 보고서", val: "sci" },
+                    { text: "B. 나만의 앱이나 간단한 AI 프로그램 제작", val: "ai" },
+                    { text: "C. 인문학 도서 읽기나 진로 관련 포트폴리오 완성", val: "general" },
+                    { text: "D. 자격증 취득, 예체능 연습 등 실질적인 능력 기르기", val: "vocational" }
+                ]
+            },
+            {
+                q: "5. 고등학교 통학 시간으로 적절한 것은?",
+                options: [
+                    { text: "A. 무조건 집에서 가장 가까운 곳 (도보 10~15분 이내)", val: "near" },
+                    { text: "B. 대중교통으로 30분 내외 정도는 괜찮다", val: "mid" },
+                    { text: "C. 멀어도 원하는 특색 프로그램(과학/AI 등)이 있는 학교", val: "far_special" },
+                    { text: "D. 거리는 상관없다. 내 진로에 꼭 맞는 학교가 최우선", val: "any" }
+                ]
+            },
+            {
+                q: "6. 어떤 분위기의 학교가 더 끌리나요?",
+                options: [
+                    { text: "A. 학생 수가 많아 경쟁이 치열해도 다양한 프로그램이 있는 학교", val: "big" },
+                    { text: "B. 규모가 작더라도 선생님의 세심한 지도를 받을 수 있는 학교", val: "small" },
+                    { text: "C. 자율성이 보장되고 학생 주도의 자치 활동이 활발한 학교", val: "autonomous" },
+                    { text: "D. 진로와 취업, 실기에 온전히 집중할 수 있는 전문적인 분위기", val: "specialized" }
+                ]
+            },
+            {
+                q: "7. 고등학교에서 가장 기대되는 것은?",
+                options: [
+                    { text: "A. 과학실험, 발명 등 이공계 심화 탐구 프로그램", val: "sci" },
+                    { text: "B. 소프트웨어, 로봇, 코딩 관련 첨단 기술 프로젝트", val: "ai" },
+                    { text: "C. 체육대회, 축제, 동아리 등 다채로운 일반 학교 생활", val: "general" },
+                    { text: "D. 전문 기술 습득, 실기 능력 향상 및 빠른 진로 준비", val: "vocational" }
+                ]
+            },
+            {
+                q: "8. 고등학교 동아리를 하나 고른다면?",
+                options: [
+                    { text: "A. 과학 탐구, 수학, 발명 관련 동아리", val: "sci" },
+                    { text: "B. 로봇, 프로그래밍, 인공지능(AI) 관련 동아리", val: "ai" },
+                    { text: "C. 신문방송, 영자신문, 인문학 토론 동아리", val: "general" },
+                    { text: "D. 제과제빵, 디자인, 밴드, 댄스 등 실무/예체능 동아리", val: "vocational" }
+                ]
+            },
+            {
+                q: "9. 시험 공부할 때 나의 스타일은?",
+                options: [
+                    { text: "A. 중간고사, 기말고사 등 지필고사를 철저히 준비하는 스타일", val: "exam" },
+                    { text: "B. 수행평가, 보고서 등 과정 중심의 평가에 강한 스타일", val: "process" },
+                    { text: "C. 벼락치기보다는 매일 꾸준히 예습과 복습을 하는 스타일", val: "steady" },
+                    { text: "D. 실기 위주나 실제 만들어낸 결과물로 평가받는 것을 선호", val: "practical" }
+                ]
+            },
+            {
+                q: "10. 고등학교에서 꼭 해 보고 싶은 활동은?",
+                options: [
+                    { text: "A. 전공 심화 실험이나 R&E(과제연구) 프로젝트 수행", val: "sci" },
+                    { text: "B. 교내 해커톤 참가나 나만의 소프트웨어 산출물 개발", val: "ai" },
+                    { text: "C. 학생회, 자율동아리 기획 등 주도적인 학교 자치 활동", val: "general" },
+                    { text: "D. 직무 관련 자격증 취득, 외부 실기 대회 참가, 인턴십", val: "vocational" }
+                ]
+            }
+        ];
+
+        // --- 상태 관리 ---
+        let userInfo = { district: "", gender: "", studentId: "", name: "", schoolTypePref: "" };
+        let userAnswers = [];
+        let currentQIndex = 0;
+        let currentRecommendations = []; // 모달용 데이터 저장
+
+        // --- 기능 구현 ---
+        function showToast(message) {
+            const toast = document.getElementById("toast-msg");
+            toast.innerText = message;
+            toast.classList.remove("opacity-0");
+            setTimeout(() => { toast.classList.add("opacity-0"); }, 2500);
+        }
+
+        function goToStep2() {
+            const studentId = document.getElementById("studentId").value.trim();
+            const name = document.getElementById("name").value.trim();
+
+            if (!studentId || !name) {
+                showToast("학번과 이름을 모두 입력해주세요!");
+                return;
+            }
+
+            userInfo.studentId = studentId;
+            userInfo.name = name;
+
+            document.getElementById("step-1").classList.add("hidden");
+            document.getElementById("step-2").classList.remove("hidden");
+        }
+
+        function goBackToStep1() {
+            document.getElementById("step-2").classList.add("hidden");
+            document.getElementById("step-1").classList.remove("hidden");
+        }
+
+        function startQuiz() {
+            const districtEl = document.querySelector('input[name="district"]:checked');
+            const genderEl = document.querySelector('input[name="gender"]:checked');
+            const schoolTypePrefEl = document.querySelector('input[name="schoolTypePref"]:checked');
+
+            if (!districtEl || !genderEl || !schoolTypePrefEl) {
+                showToast("모든 조건(구역, 성별, 고교 유형)을 선택해주세요!");
+                return;
+            }
+
+            userInfo.district = districtEl.value;
+            userInfo.gender = genderEl.value;
+            userInfo.schoolTypePref = schoolTypePrefEl.value;
+            
+            document.getElementById("step-2").classList.add("hidden");
+            document.getElementById("step-3").classList.remove("hidden");
+            document.getElementById("welcome-message").innerText = `환영합니다, ${userInfo.name} 학생! 지금부터 나에게 맞는 고등학교를 찾기 위한 10가지 질문을 시작할게요.`;
+            
+            renderQuestion();
+        }
+
+        function renderQuestion() {
+            const q = questions[currentQIndex];
+            document.getElementById("question-text").innerText = q.q;
+            document.getElementById("q-current").innerText = currentQIndex + 1;
+            document.getElementById("progress-bar").style.width = `${((currentQIndex + 1) / 10) * 100}%`;
+            
+            const optionsContainer = document.getElementById("options-container");
+            optionsContainer.innerHTML = "";
+
+            q.options.forEach((opt, idx) => {
+                const btn = document.createElement("button");
+                btn.className = "option-btn w-full text-left p-4 rounded-xl border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium text-gray-700 bg-white";
+                btn.innerText = opt.text;
+                btn.onclick = () => selectOption(opt.val);
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function selectOption(val) {
+            userAnswers.push(val);
+            if (currentQIndex < questions.length - 1) {
+                currentQIndex++;
+                const qContainer = document.getElementById("step-3");
+                qContainer.classList.remove("fade-in");
+                void qContainer.offsetWidth; // 리플로우 강제 트리거
+                qContainer.classList.add("fade-in");
+                renderQuestion();
+            } else {
+                analyzeResults();
+            }
+        }
+
+        function analyzeResults() {
+            document.getElementById("step-3").classList.add("hidden");
+            document.getElementById("step-4").classList.remove("hidden");
+            document.getElementById("result-subtitle").innerText = `${userInfo.district}를 희망하는 ${userInfo.name} 학생을 위한 추천 결과입니다.`;
+
+            // 1. 구역 및 성별 필터링
+            let filteredSchools = schoolsDB.filter(s => s.district === userInfo.district);
+            
+            if (userInfo.gender === "남학생") {
+                filteredSchools = filteredSchools.filter(s => s.type !== "girls");
+            } else if (userInfo.gender === "여학생") {
+                filteredSchools = filteredSchools.filter(s => s.type !== "boys");
+            }
+
+            // 1-1. 고교 유형 필터링
+            if (userInfo.schoolTypePref === "일반고") {
+                filteredSchools = filteredSchools.filter(s => s.detailType.includes("일반고") || s.detailType.includes("자율형"));
+            } else if (userInfo.schoolTypePref === "특성화고") {
+                filteredSchools = filteredSchools.filter(s => s.detailType.includes("특성화고") || s.detailType.includes("특목고"));
+            }
+
+            const sciCount = userAnswers.filter(ans => ans === "sci").length;
+            const aiCount = userAnswers.filter(ans => ans === "ai").length;
+            const vocationalCount = userAnswers.filter(ans => ans === "vocational").length;
+            const practiceCount = userAnswers.filter(ans => ans === "practice" || ans === "practical").length;
+
+            // 2. 답변 기반 점수 부여 알고리즘
+            const scores = filteredSchools.map(s => {
+                let score = 0;
+                let reasons = [];
+
+                if (s.detailType.includes("특성화고") || s.detailType.includes("특목고")) {
+                    if (vocationalCount >= 2 || practiceCount >= 1) {
+                        score += (vocationalCount * 15);
+                        reasons.push("🛠️ 실기 및 취업 중심: 학생의 실무/전문기술 선호도와 일치합니다.");
+                    }
+                } else if (s.detailType.includes("일반고") || s.detailType.includes("자율형")) {
+                    if (vocationalCount < 2) score += 10;
+                }
+
+                if (sciCount >= 2 && s.features.includes("과학중점고")) {
+                    score += 20 + (sciCount * 5); 
+                    reasons.push("🔬 과학중점고: 수학·과학 심화 과정 및 실험 중심 탐구 활동이 잘 맞습니다.");
+                }
+
+                if (aiCount >= 2 && s.features.includes("AI 중점 학교")) {
+                    score += 20 + (aiCount * 5); 
+                    reasons.push("💻 AI중점학교: 인공지능, 소프트웨어 등 미래 기술 교육과정에 흥미가 높습니다.");
+                }
+
+                score += Math.floor(Math.random() * 5); // 무작위 가산점
+
+                return { school: s, score: score, reasons: [...new Set(reasons)] };
+            });
+
+            scores.sort((a, b) => b.score - a.score);
+            const topRecommendations = scores.slice(0, 3);
+            currentRecommendations = topRecommendations;
+
+            renderRecommendations(topRecommendations);
+            renderComparison(filteredSchools); 
+            
+            // 학생 직접 선택을 위한 드롭다운 옵션 채우기 (해당 구역의 모든 학교)
+            populateDropdowns();
+        }
+
+        function populateDropdowns() {
+            const selects = [document.getElementById('user-choice-1'), document.getElementById('user-choice-2'), document.getElementById('user-choice-3')];
+            let optionsHtml = `<option value="">선택해주세요</option>`;
+            
+            // 학생이 선택한 '구역' 내의 모든 학교 가져오기 (성별/유형 필터링 없이 모두 표시)
+            const districtSchools = schoolsDB.filter(s => s.district === userInfo.district);
+            
+            districtSchools.forEach(s => {
+                optionsHtml += `<option value="${s.name}">${s.name}</option>`;
+            });
+
+            selects.forEach(select => {
+                select.innerHTML = optionsHtml;
+            });
+        }
+
+        function submitFinalChoice() {
+            const choice1 = document.getElementById("user-choice-1").value;
+            const choice2 = document.getElementById("user-choice-2").value;
+            const choice3 = document.getElementById("user-choice-3").value;
+
+            if(!choice1 || !choice2 || !choice3) {
+                showToast("1~3순위 희망 학교를 모두 선택해주세요!");
+                return;
+            }
+
+            if(new Set([choice1, choice2, choice3]).size !== 3) {
+                showToast("서로 다른 학교를 선택해주세요!");
+                return;
+            }
+
+            // --- 구글 스프레드시트 연동 데이터 전송 로직 ---
+            const sendData = {
+                studentId: userInfo.studentId,
+                studentName: userInfo.name,
+                zone: userInfo.district,
+                gender: userInfo.gender,
+                type: userInfo.schoolTypePref,
+                q1: userAnswers[0] || "",
+                q2: userAnswers[1] || "",
+                q3: userAnswers[2] || "",
+                q4: userAnswers[3] || "",
+                q5: userAnswers[4] || "",
+                q6: userAnswers[5] || "",
+                q7: userAnswers[6] || "",
+                q8: userAnswers[7] || "",
+                q9: userAnswers[8] || "",
+                q10: userAnswers[9] || "",
+                result1: choice1, // 학생이 직접 선택한 1순위
+                result2: choice2, // 학생이 직접 선택한 2순위
+                result3: choice3  // 학생이 직접 선택한 3순위
+            };
+
+            const btn = document.getElementById("submit-btn");
+            btn.innerText = "제출 중...";
+            btn.disabled = true;
+
+            // 💡 [중요] 복사해둔 구글 앱스 스크립트 웹앱 URL을 아래 따옴표 안에 붙여넣으세요!
+            const GOOGLE_SCRIPT_URL = "여기에_3단계에서_복사한_웹앱_URL을_붙여넣으세요";
+
+            // URL이 제대로 입력되었을 때만 전송하도록 처리
+            if (GOOGLE_SCRIPT_URL !== "여기에_3단계에서_복사한_웹앱_URL을_붙여넣으세요") {
+                fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors', 
+                    headers: {
+                        'Content-Type': 'text/plain' 
+                    },
+                    body: JSON.stringify(sendData)
+                }).then(() => {
+                    btn.innerText = "제출 완료! 🎉";
+                    btn.classList.replace("bg-green-600", "bg-gray-500");
+                    btn.classList.replace("hover:bg-green-700", "hover:bg-gray-600");
+                    showToast("최종 선택이 성공적으로 제출되었습니다!");
+                }).catch(err => {
+                    console.error("데이터 기록 중 오류 발생: ", err);
+                    btn.innerText = "제출 실패 (재시도)";
+                    btn.disabled = false;
+                });
+            } else {
+                setTimeout(() => {
+                    btn.innerText = "제출 완료! (테스트) 🎉";
+                    btn.classList.replace("bg-green-600", "bg-gray-500");
+                    btn.classList.replace("hover:bg-green-700", "hover:bg-gray-600");
+                    showToast("제출되었습니다. (현재 시트 연동 URL 미입력 상태)");
+                }, 800);
+            }
+        }
+
+        function renderRecommendations(recommendations) {
+            const container = document.getElementById("results-container");
+            container.innerHTML = "";
+
+            if(recommendations.length === 0) {
+                container.innerHTML = `<div class="p-6 bg-white border border-gray-200 rounded-xl text-center text-gray-500">조건에 맞는 학교를 찾지 못했습니다.</div>`;
+                return;
+            }
+
+            recommendations.forEach((rec, index) => {
+                const medal = index === 0 ? "🥇 1순위 추천" : index === 1 ? "🥈 2순위 추천" : "🥉 3순위 추천";
+                const bg = index === 0 ? "bg-blue-50 border-blue-300 shadow-md" : "bg-white border-gray-200 hover:border-blue-300";
+                
+                let reasonHtml = rec.reasons.length > 0 
+                    ? `<ul class="mt-3 text-sm text-gray-700 space-y-1">${rec.reasons.map(r => `<li>• ${r}</li>`).join("")}</ul>`
+                    : `<p class="mt-3 text-sm text-gray-700">• 학생의 전반적인 학업 스타일과 진로 방향에 잘 맞는 학교입니다.</p>`;
+
+                const cardHtml = `
+                    <div class="p-5 border-2 ${bg} rounded-xl shadow-sm fade-in cursor-pointer transition-all hover:-translate-y-1 hover:shadow-lg" 
+                         onclick="showSchoolDetail('${rec.school.name}')" style="animation-delay: ${index * 0.1}s">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm font-extrabold text-blue-700 tracking-wide">${medal}</span>
+                            <span class="text-xs text-gray-500 font-semibold bg-gray-100 px-2 py-1 rounded">${rec.school.district}</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                            ${rec.school.name}
+                            <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                        </h3>
+                        ${reasonHtml}
+                    </div>
+                `;
+                container.innerHTML += cardHtml;
+            });
+        }
+
+        function showSchoolDetail(schoolName) {
+            const rec = currentRecommendations.find(r => r.school.name === schoolName);
+            if(!rec) return;
+
+            document.getElementById("modal-title").innerText = rec.school.name;
+            document.getElementById("modal-district").innerText = rec.school.district;
+            document.getElementById("modal-type").innerText = rec.school.detailType;
+            
+            const featuresHtml = rec.school.features.map(f => 
+                `<span class="bg-gray-100 text-gray-800 font-medium px-3 py-1 rounded-md border border-gray-200 shadow-sm">${f}</span>`
+            ).join("");
+            document.getElementById("modal-features").innerHTML = featuresHtml;
+
+            const reasonsHtml = rec.reasons.length > 0
+                ? rec.reasons.map(r => `<li>${r}</li>`).join("")
+                : `<li>학생의 종합적인 성향 및 선호도와 일치</li><li>희망 진학 구역 내 최적의 교육 환경 제공</li>`;
+            document.getElementById("modal-reasons").innerHTML = reasonsHtml;
+
+            document.getElementById("school-modal").classList.remove("hidden");
+        }
+
+        function closeSchoolDetail() {
+            document.getElementById("school-modal").classList.add("hidden");
+        }
+
+        function renderComparison(schoolsList) {
+            const tbody = document.getElementById("comparison-tbody");
+            if (schoolsList.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" class="px-4 py-8 text-center text-gray-500">조건에 맞는 학교가 없습니다.</td></tr>`;
+                return;
+            }
+            
+            tbody.innerHTML = schoolsList.map(s => `
+                <tr class="border-b hover:bg-blue-50 transition-colors">
+                    <td class="px-4 py-3 font-bold text-gray-900">${s.name}</td>
+                    <td class="px-4 py-3 text-gray-600">${s.detailType}</td>
+                    <td class="px-4 py-3">
+                        <div class="flex flex-wrap gap-1">
+                            ${s.features.map(f => `<span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-0.5 rounded border border-blue-200">${f}</span>`).join('')}
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+    </script>
+</body>
+</html>
